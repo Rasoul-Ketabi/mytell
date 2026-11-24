@@ -1,22 +1,24 @@
-# Do not commit recovered or release APKs until privacy/security review
-*.apk
-*.aab
-*.apks
-*.jks
-*.keystore
-*.p12
-*.pfx
-*.pem
-*.key
-*.mobileprovision
-*.cer
-*.der
-*.env
-.env.*
-!*.example
-*.log
+# Generated packages, crash diagnostics and private signing credentials
 dist/
 smoke-logs/
 local-inputs/
 __pycache__/
 .pytest_cache/
+*.aab
+*.apks
+*.apk
+# Project owner explicitly elected to allow this exact historical APK in the public recovery repository.
+!inputs/
+!inputs/itell-1.4-b40-original.apk
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+*.mobileprovision
+*.env
+.env.*
+!*.example
+*.log
