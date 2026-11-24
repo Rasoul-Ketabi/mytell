@@ -17,20 +17,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  source-input:
+    runs-on: ubuntu-24.04
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        name: Check whether original recovery APK was uploaded
+        shell: bash
+        run: |
+          if [ -s inputs/itell-1.4-b40-original.apk ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Original APK present. Package job will validate SHA-256."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Awaiting inputs/itell-1.4-b40-original.apk; packaging deliberately skipped."
+            echo "## Recovery input required" >> "$GITHUB_STEP_SUMMARY"
+            echo "No APK has been built: upload the original 4,189,976-byte APK at inputs/itell-1.4-b40-original.apk." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   package:
+    needs: source-input
+    if: needs.source-input.outputs.available == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Verify recovery source is available
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -s inputs/itell-1.4-b40-original.apk ]; then
-            echo "::error::Missing inputs/itell-1.4-b40-original.apk; upload the SHA-pinned original APK before running this workflow"
-            exit 1
-          fi
-          echo "Original APK present; SHA256 is verified by recovery script."
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
