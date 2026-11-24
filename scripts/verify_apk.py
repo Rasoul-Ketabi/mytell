@@ -21,7 +21,7 @@ with args.apk.open("rb") as raw, zipfile.ZipFile(raw) as z:
     # Android maps uncompressed resources directly from the local ZIP entry.
     raw.seek(info.header_offset)
     local = raw.read(30)
-    assert len(local) == 30 and local[:4] == b"PK\\x03\\x04", "Invalid local header"
+    assert len(local) == 30 and local[:4] == bytes.fromhex("504b0304"), "Invalid local header"
     fields = struct.unpack("<IHHHHHIIIHH", local)
     name_len, local_extra_len = fields[-2:]
     raw_name = raw.read(name_len)
