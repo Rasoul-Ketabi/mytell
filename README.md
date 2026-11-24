@@ -1,29 +1,37 @@
-# iTell Android Recovery
+# iTell Android recovery — DEV only
 
-This repository is reserved for recovering and testing the **Android iTell 1.4 (Build 40)** application against the **existing iTell iOS 1.3** client. The iOS application must remain unchanged.
+[GitHub Actions](https://github.com/Rasoul-Ketabi/mytell/actions)
 
-## Current status
+This is an experimental reconstruction from **Android APK 1.4 Build 40**, **not original Android Studio source code**.
 
-- The original Android Studio source and release signing keystore were lost.
-- An original Android APK is available for controlled binary analysis and reconstruction.
-- Login and commercial licensing are intended to be **temporarily absent** in the development edition.
-- **All access to the legacy `itellapp.com` domain and its subdomains is prohibited**. This includes updates, support links, logging, authentication, and runtime connections.
-- Bluetooth pairing, QR payload, key agreement, encrypted transport, calls, and messaging must remain protocol-compatible with iOS 1.3.
-- **This repository is currently PUBLIC. No original APK, recovered proprietary sources, signing material, secrets, or test-user data should be committed until the repository has been made PRIVATE.**
+**Primary goal:** recover an installable Android app that can pair with the already installed **iTell iOS 1.3** app without changing its code. Temporarily remove the old commercial account/license requirement while preserving secure QR/BLE/Wi-Fi pairing and telephony.
 
-## Planned Android CI
+## Security and visibility
 
-Once the repository becomes private, stage the recovery input and the offline patching scripts. The workflow will:
-1. SHA-256-pin the original input APK and verify patch preconditions.
-2. Build a candidate using official Android SDK build tools (`zipalign`, then `apksigner`).
-3. Verify Android resource alignment, DEX integrity, signature, ABI compatibility, and known legacy-domain references.
-4. Attempt an ADB installation and startup smoke test using a compatible Android environment.
-5. Store output in **private workflow artifacts**, not public Releases. Successful packaging alone is not proof of installation, iPhone pairing, call audio, or security.
+**This repository is PUBLIC by the project owner's explicit choice.** Do not publish any private key, keystore, token, password or user data.
 
-**Important:** This is not yet an Android Studio/Gradle source project. The first objective is a reproducible, installable recovery build; maintainable source reconstruction comes later.
+The former domains `itellapp.com` and `api.itellapp.com` are no longer owned by the project and must be treated as hostile. The recovery script replaces explicit occurrences of the old domain with the reserved `offline.test` name; that substitution does NOT prove dynamic network safety. Before testing, independently block the old domains in DNS/firewall. Do not run an unreviewed APK with real accounts or sensitive SIM data.
 
-## Next action
+## Bootstrapping the recovery build
 
-In GitHub: **Settings → General → Danger Zone → Change repository visibility → Make private**.
+**One original input is required:** `inputs/itell-1.4-b40-original.apk`.
 
-Once GitHub reports `private`, the original recovery APK and source-controlled CI can be staged. Do not make a public release of any candidate at this stage.
+1. Get the exact historical APK from the project owner's archival copy (4,189,976 bytes).
+2. Upload it to `inputs/itell-1.4-b40-original.apk` in this repository. Because the repo is public, that binary and its original legacy server URLs become public too. Never upload signing secrets.
+3. The `iTell Android - DEV recovery and install test` GitHub Actions workflow triggers automatically on the commit, or use **Actions → Run workflow**.
+4. The job checks the original APK digest, applies the small binary patch, uses official Android SDK tools `zipalign` and `apksigner`, verifies DEX/resource structure and attempts ADB install and launch using Android API 35.
+5. If all jobs pass, download `itell-dev-package-<run_number>` from that run's **Artifacts**. There is intentionally no GitHub Release yet.
+
+**SHA-256 required for the input:** `ea715b2f6e254dbd6083ed1338f10dc0845b725e561ab33b47e91d9df5f05ca7`
+
+## What a green job means — and does not mean
+
+A green package job establishes correctly aligned and cryptographically signed packaging for the checked APK and a static old-domain literal scan. A green emulator job establishes installation and launch on **that** emulator only. Neither proves security, ability to pair with iPhone, voice calling or broad handset compatibility.
+
+The APK has ARM-only native libraries. ABI translation in x86_64 API 35 emulators is device-image-specific. If `INSTALL_FAILED_NO_MATCHING_ABIS` occurs, diagnose the actual emulator architecture; do **not** claim the APK is generically un-installable.
+
+The workflow uses a new throwaway signing certificate per run. You must uninstall any previously installed iTell package with a different signer before installing a new candidate. This erases local app data.
+
+**Never modify the original iOS 1.3 app for these tests.** Do not disable secure pairing/crypto merely to bypass commercial licensing.
+
+Detailed status: [docs/RECOVERY-STATUS.md](docs/RECOVERY-STATUS.md) and [docs/SECURITY.md](docs/SECURITY.md).
