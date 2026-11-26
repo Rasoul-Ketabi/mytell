@@ -1,10 +1,10 @@
 # iTell Android recovery — current baseline: 1.6 Build 49
 
-> **Current test candidate: [download APK 1.6 Build 49 from this conversation](https://github.com/Rasoul-Ketabi/mytell/tree/main/inputs).** The new source APK has **not yet** been uploaded to this repository; the linked folder is the staging location, not a finished Build 49 binary. The existing `downloads/Build-6` APK is **historical** and based on Android 1.4 Build 40; do not confuse it with Build 49.
+> **Current baseline:** [original Android 1.6 Build 49 APK](inputs/itell-1.6-49.apk) is now uploaded and its exact SHA-256 has been verified. The Build 49 package job has passed; Android API 35 emulator install/startup is still pending. The old `downloads/Build-6` APK is historical and based on Android 1.4 Build 40.
 
-The current target is compatibility with **iTell iOS 1.6**, without online account/licensing and with every reference to the lost legacy domain eliminated. A separate [Build 49 CI workflow](.github/workflows/android-dev-16.yml) and [Build 49 recovery script](scripts/prepare_dev_apk_16.py) are present. Upload `inputs/itell-1.6-b49-original.apk` (SHA-256 `aab15e238a168607eccf05547e88aee69d91ddb71283c9fb3dd3112c55e86a03`) to activate Build 49 GitHub tests.
+The target is compatibility with **iTell iOS 1.6**, temporarily bypassing the online commercial account/license checks while preserving QR/BLE security. The [Build 49 CI workflow](.github/workflows/android-dev-16.yml) and [Build 49 recovery script](scripts/prepare_dev_apk_16.py) are active. Source APK SHA-256: `aab15e238a168607eccf05547e88aee69d91ddb71283c9fb3dd3112c55e86a03`.
 
-**Testing status:** The locally generated Build 49 APK has passed static DEX, alignment, ZIP and v2 signature checks. It has **NOT** yet been tested by ADB or an iPhone. The prior successful emulator CI installation is for Build 40 **only**.
+**Current validation:** three DEX patches applied with exact byte preconditions; 55 explicit old-domain literals replaced; official Android SDK zipalign and apksigner steps succeeded; DEX integrity and ZIP alignment checks passed. Emulator install/startup, iOS 1.6 pairing, calls/audio, full commercial-gate removal, and runtime network isolation are not yet confirmed. Literal replacement does not prove that no dynamically constructed request can reach the former domain.
 
 ## Historical Build 40 notes
 
@@ -12,7 +12,7 @@ The current target is compatibility with **iTell iOS 1.6**, without online accou
 
 This is an experimental reconstruction from **Android APK 1.4 Build 40**, **not original Android Studio source code**.
 
-**Primary goal:** recover an installable Android app that can pair with the already installed **iTell iOS 1.3** app without changing its code. Temporarily remove the old commercial account/license requirement while preserving secure QR/BLE/Wi-Fi pairing and telephony.
+**Primary goal:** recover an installable Android app that can pair with the already installed **iTell iOS 1.6** app without changing its code. Temporarily remove the old commercial account/license requirement while preserving secure QR/BLE/Wi-Fi pairing and telephony.
 
 ## Security and visibility
 
