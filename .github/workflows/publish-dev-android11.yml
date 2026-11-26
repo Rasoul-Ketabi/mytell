@@ -1,0 +1,59 @@
+name: iTell 1.6 Android11 - publish emulator-tested APK
+
+on:
+  workflow_run:
+    workflows: ["iTell Android 1.6 Build49 Android11 - DEV recovery and install test"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: itell-16-b49-api30-dev-package-${{ github.event.workflow_run.run_number }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: staging
+      - name: Commit APK only when the upstream CI has passed ADB installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s staging/itell-android-16-b49-api30-dev-untested.apk
+          python3 - <<'PY'
+          import json, pathlib
+          x=json.loads(pathlib.Path("staging/static-checks.json").read_text())
+          assert x["resources_aligned"] and x["dex_checksums_valid"]
+          assert x["explicit_legacy_domain_literals_found"] is False
+          compat = json.loads(pathlib.Path("staging/android11-manifest-report.json").read_text())
+          assert compat["input_min_sdk"] == 31
+          assert compat["output_min_sdk"] == 30
+          assert compat["target_sdk"] == 36
+          assert compat["manifest_bytes_changed"] == 1
+          PY
+          mkdir -p downloads
+          cp staging/itell-android-16-b49-api30-dev-untested.apk downloads/iTell-Android-1.6-b49-Android11-DEV-UNVERIFIED-PAIRING.apk
+          cat > downloads/BUILD-49-ANDROID11-READ-ME.txt <<'EOF'
+          iTell Android 1.6 Build 49 — Android 11 (API 30) DEV ONLY
+          CI: package, official zipalign/apksigner, DEX/ZIP static checks PASS.
+          Android API 30 x86_64 emulator: ADB install SUCCESS; MainActivity resolved and started;
+          live app process and foreground activity verified; no app FATAL EXCEPTION found.
+          minSdkVersion has been changed from API 31 to 30. A green API30 emulator install
+          does not prove complete Android11 runtime, BLE, calls or phone-model compatibility.
+          NOT TESTED: iOS 1.6 pairing, BLE/Wi-Fi transport, Shell readiness, calls, audio, SMS,
+          complete license removal, or runtime network safety. Explicit old-domain literals
+          were replaced; this is not proof against dynamically constructed requests.
+          Ephemeral CI signing key: uninstall previous iTell DEV APK before installing a new run.
+          NOT FOR PRODUCTION OR GENERAL DISTRIBUTION.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f downloads/iTell-Android-1.6-b49-Android11-DEV-UNVERIFIED-PAIRING.apk
+          git add downloads/BUILD-49-ANDROID11-READ-ME.txt
+          git diff --cached --quiet || (git commit -m "build: publish Build49 API30 test candidate after emulator verification" && git push origin HEAD:main)
