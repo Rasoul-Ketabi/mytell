@@ -1,0 +1,130 @@
+name: iTell Android 1.6 Build49 - Android11 TLS compatibility APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android11-tls30.yml'
+      - 'scripts/android11/**'
+      - 'scripts/prepare_android11_compat.py'
+      - 'scripts/prepare_dev_apk_16.py'
+      - 'inputs/itell-1.6-49.apk'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: itell-tls30-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+      - name: Install official Android SDK build tools
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - name: Rebuild original APK with authenticated API30 TLS exporter
+        shell: bash
+        run: bash scripts/android11/build_android11_tls.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: itell-api30-tls30-package-${{ github.run_number }}
+          path: dist/
+          retention-days: 14
+          if-no-files-found: warn
+
+  android11-install:
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: itell-api30-tls30-package-${{ github.run_number }}
+          path: dist
+      - name: Configure KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+      - name: Android 11 install and bounded launch check
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/emulator_smoke_api30.sh dist/iTell-1.6-B49-Android11-TLS30-DEV.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: itell-api30-tls30-diagnostics-${{ github.run_number }}
+          path: smoke-logs/
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish-dev-candidate:
+    needs: package
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: itell-api30-tls30-package-${{ github.run_number }}
+          path: staging
+      - name: Validate before publishing experimental APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s staging/iTell-1.6-B49-Android11-TLS30-DEV.apk
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          x = json.loads(Path('staging/tls30-report.json').read_text())
+          assert set(x['exact_bytecode_targets']) == {'defpackage/T.smali', 'defpackage/Lc.smali'}
+          assert x['extra_dex_files']
+          y = json.loads(Path('staging/android11-manifest-report.json').read_text())
+          assert y['output_min_sdk'] == 30 and y['target_sdk'] == 36
+          z = json.loads(Path('staging/static-checks.json').read_text())
+          assert z['resources_aligned'] and z['dex_checksums_valid']
+          assert z['explicit_legacy_domain_literals_found'] is False
+          PY
+      - name: Put candidate APK in repository downloads folder
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloads
+          cp staging/iTell-1.6-B49-Android11-TLS30-DEV.apk downloads/iTell-Android-1.6-B49-API30-TLS-FIX-DEV-UNVERIFIED-PAIRING.apk
+          cat > downloads/BUILD49-API30-TLS-FIX-NOTES.txt <<'EOF'
+          iTell Android 1.6 Build49 - Android11 TLS experimental DEV build.
+          Verified: exact SHA-pinned source, patched ADB TLS exporter, APK static checks,
+          Android SDK signature validation and 4-byte resources alignment.
+          The emulator test runs separately; do NOT infer a pass from published APK.
+          Physical phone pairing, BLE and iOS 1.6 telephony/audio remain unverified.
+          Old-domain strings replaced, but runtime network isolation not proven.
+          Signed with ephemeral development key. Uninstall previous DEV build before installing.
+          For test phones only, not a production release.
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f downloads/iTell-Android-1.6-B49-API30-TLS-FIX-DEV-UNVERIFIED-PAIRING.apk
+          git add downloads/BUILD49-API30-TLS-FIX-NOTES.txt
+          if ! git diff --cached --quiet; then
+            git commit -m 'build: publish Android11 TLS-compatible development APK'
+            git push origin HEAD:main
+          fi
