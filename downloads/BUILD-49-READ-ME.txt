@@ -1,2 +1,9 @@
-Android 1.6 Build49 DEV: verified CI package and emulator installation.
-NOT verified with iOS, call audio, or runtime network safety. Do not distribute as a final release.
+iTell Android 1.6 Build 49 — DEV ONLY
+CI: package, official zipalign/apksigner, DEX/ZIP static checks PASS.
+Android API 35 x86_64 emulator: ADB install SUCCESS; MainActivity resolved and started;
+live app process and foreground activity verified; no app FATAL EXCEPTION found.
+NOT TESTED: iOS 1.6 pairing, BLE/Wi-Fi transport, Shell readiness, calls, audio, SMS,
+complete license removal, or runtime network safety. Explicit old-domain literals
+were replaced; this is not proof against dynamically constructed requests.
+Ephemeral CI signing key: uninstall previous iTell DEV APK before installing a new run.
+NOT FOR PRODUCTION OR GENERAL DISTRIBUTION.
