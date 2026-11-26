@@ -8,6 +8,10 @@ The target is compatibility with **iTell iOS 1.6**, temporarily bypassing the on
 
 **Download:** [Build 49 DEV APK](downloads/iTell-Android-1.6-b49-DEV-UNVERIFIED-PAIRING.apk). Each CI run creates a new ephemeral test certificate; uninstall any previous iTell DEV build before installing a newer one. This is not a production or public release.
 
+## Android OS compatibility
+
+**IMPORTANT:** The source and signed DEV Android 1.6 Build 49 APK both declare `minSdkVersion=31`, meaning **Android 12 or later is required**. The target SDK is 36. **Android 11 (API 30) cannot install the current Build 49 APK**, even if Google Play Protect is disabled. Prior successful GitHub CI installation on Android 15 (API 35) does not establish Android 11 support. A separately built and thoroughly tested Android 11 compatibility variant would be necessary; merely changing the manifest number is not sufficient proof that Android 12-only APIs are absent.
+
 ## Historical Build 40 notes
 
 [GitHub Actions](https://github.com/Rasoul-Ketabi/mytell/actions)
