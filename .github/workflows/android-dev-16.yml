@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/android-dev-16.yml"
       - "scripts/prepare_dev_apk_16.py"
+      - "scripts/emulator_smoke.sh"
       - "inputs/itell-1.6-49.apk"
   workflow_dispatch:
 
