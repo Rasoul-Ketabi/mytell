@@ -1,10 +1,12 @@
 # iTell Android recovery — current baseline: 1.6 Build 49
 
-> **Current baseline:** [original Android 1.6 Build 49 APK](inputs/itell-1.6-49.apk) is now uploaded and its exact SHA-256 has been verified. The Build 49 package job has passed; Android API 35 emulator install/startup is still pending. The old `downloads/Build-6` APK is historical and based on Android 1.4 Build 40.
+> **Current baseline:** [original Android 1.6 Build 49 APK](inputs/itell-1.6-49.apk) is now uploaded and its exact SHA-256 has been verified. Build 49 CI packaging and the stricter Android API 35 emulator install/foreground-launch checks have passed. The old `downloads/Build-6` APK is historical and based on Android 1.4 Build 40.
 
 The target is compatibility with **iTell iOS 1.6**, temporarily bypassing the online commercial account/license checks while preserving QR/BLE security. The [Build 49 CI workflow](.github/workflows/android-dev-16.yml) and [Build 49 recovery script](scripts/prepare_dev_apk_16.py) are active. Source APK SHA-256: `aab15e238a168607eccf05547e88aee69d91ddb71283c9fb3dd3112c55e86a03`.
 
-**Current validation:** three DEX patches applied with exact byte preconditions; 55 explicit old-domain literals replaced; official Android SDK zipalign and apksigner steps succeeded; DEX integrity and ZIP alignment checks passed. Emulator install/startup, iOS 1.6 pairing, calls/audio, full commercial-gate removal, and runtime network isolation are not yet confirmed. Literal replacement does not prove that no dynamically constructed request can reach the former domain.
+**Current validation:** three DEX patches applied with exact byte preconditions; 55 explicit old-domain literals replaced; official Android SDK zipalign and apksigner steps succeeded; DEX integrity and ZIP alignment checks passed. Android API 35 ADB installation, launcher resolution, explicit activity start, live process, and foreground activity are verified. iOS 1.6 pairing, calls/audio, full commercial-gate removal, and runtime network isolation are not yet confirmed. Literal replacement does not prove that no dynamically constructed request can reach the former domain.
+
+**Download:** [Build 49 DEV APK](downloads/iTell-Android-1.6-b49-DEV-UNVERIFIED-PAIRING.apk). Each CI run creates a new ephemeral test certificate; uninstall any previous iTell DEV build before installing a newer one. This is not a production or public release.
 
 ## Historical Build 40 notes
 
