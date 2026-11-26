@@ -13,11 +13,11 @@ import zipfile
 from pathlib import Path
 
 PATCHES = {
-    "defpackage/T.smali": (
+    "T.smali": (
         "Ljavax/net/ssl/SSLContext;->getInstance(Ljava/lang/String;)Ljavax/net/ssl/SSLContext;",
         "Lcom/itellapp/android/compat/AdbTlsCompat;->getContext(Ljava/lang/String;)Ljavax/net/ssl/SSLContext;"
     ),
-    "defpackage/Lc.smali": (
+    "Lc.smali": (
         "Landroid/net/ssl/SSLSockets;->exportKeyingMaterial(Ljavax/net/ssl/SSLSocket;Ljava/lang/String;[BI)[B",
         "Lcom/itellapp/android/compat/AdbTlsCompat;->exportKeyingMaterial(Ljavax/net/ssl/SSLSocket;Ljava/lang/String;[BI)[B"
     ),
