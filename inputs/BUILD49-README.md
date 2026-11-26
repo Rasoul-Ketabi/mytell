@@ -2,7 +2,7 @@
 
 Upload the *original, unmodified* APK to this location with the exact file name:
 
-`inputs/itell-1.6-b49-original.apk`
+`inputs/itell-1.6-49.apk`
 
 - Expected size: **4,716,760 bytes**
 - Required SHA-256: `aab15e238a168607eccf05547e88aee69d91ddb71283c9fb3dd3112c55e86a03`
