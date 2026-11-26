@@ -1,4 +1,12 @@
-# iTell Android recovery — DEV only
+# iTell Android recovery — current baseline: 1.6 Build 49
+
+> **Current test candidate: [download APK 1.6 Build 49 from this conversation](https://github.com/Rasoul-Ketabi/mytell/tree/main/inputs).** The new source APK has **not yet** been uploaded to this repository; the linked folder is the staging location, not a finished Build 49 binary. The existing `downloads/Build-6` APK is **historical** and based on Android 1.4 Build 40; do not confuse it with Build 49.
+
+The current target is compatibility with **iTell iOS 1.6**, without online account/licensing and with every reference to the lost legacy domain eliminated. A separate [Build 49 CI workflow](.github/workflows/android-dev-16.yml) and [Build 49 recovery script](scripts/prepare_dev_apk_16.py) are present. Upload `inputs/itell-1.6-b49-original.apk` (SHA-256 `aab15e238a168607eccf05547e88aee69d91ddb71283c9fb3dd3112c55e86a03`) to activate Build 49 GitHub tests.
+
+**Testing status:** The locally generated Build 49 APK has passed static DEX, alignment, ZIP and v2 signature checks. It has **NOT** yet been tested by ADB or an iPhone. The prior successful emulator CI installation is for Build 40 **only**.
+
+## Historical Build 40 notes
 
 [GitHub Actions](https://github.com/Rasoul-Ketabi/mytell/actions)
 
