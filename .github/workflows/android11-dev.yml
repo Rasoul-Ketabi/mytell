@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/workflows/android11-dev.yml"
       - "scripts/prepare_android11_compat.py"
-      - "scripts/emulator_smoke.sh"
+      - "scripts/emulator_smoke_api30.sh"
       - "scripts/prepare_dev_apk_16.py"
       - "scripts/emulator_smoke.sh"
       - "inputs/itell-1.6-49.apk"
@@ -149,7 +149,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: bash scripts/emulator_smoke.sh dist/itell-android-16-b49-api30-dev-untested.apk
+          script: bash scripts/emulator_smoke_api30.sh dist/itell-android-16-b49-api30-dev-untested.apk
       - uses: actions/upload-artifact@v4
         if: always()
         with:
