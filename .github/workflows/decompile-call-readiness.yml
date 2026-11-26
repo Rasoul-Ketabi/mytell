@@ -24,12 +24,21 @@ jobs:
             -o "$RUNNER_TEMP/jadx.zip"
           mkdir -p "$RUNNER_TEMP/jadx"
           unzip -q "$RUNNER_TEMP/jadx.zip" -d "$RUNNER_TEMP/jadx"
+      - name: Download the exact Build #6 CI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: itell-dev-package-6
+          run-id: 45477969314
+          github-token: ${{ github.token }}
+          path: staging
       - name: Decompile original and patched APK
         run: |
           set -euo pipefail
           JADX="$(find "$RUNNER_TEMP/jadx" -type f -path '*/bin/jadx' | head -n1)"
           test -x "$JADX"
+          test -s staging/itell-android-dev-untested.apk
           mkdir -p analysis/original analysis/build6
+          cp staging/itell-android-dev-untested.apk /tmp/build6.apk
           "$JADX" --show-bad-code -j 2 -d analysis/original inputs/itell-1.4-b40-original.apk
           "$JADX" --show-bad-code -j 2 -d analysis/build6 /tmp/build6.apk
       - name: Extract call-readiness evidence
