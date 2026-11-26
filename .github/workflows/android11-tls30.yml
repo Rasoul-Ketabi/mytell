@@ -96,7 +96,7 @@ jobs:
           import json
           from pathlib import Path
           x = json.loads(Path('staging/tls30-report.json').read_text())
-          assert set(x['exact_bytecode_targets']) == {'defpackage/T.smali', 'defpackage/Lc.smali'}
+          assert set(x['exact_bytecode_targets']) == {'T.smali', 'Lc.smali'}
           assert x['extra_dex_files']
           y = json.loads(Path('staging/android11-manifest-report.json').read_text())
           assert y['output_min_sdk'] == 30 and y['target_sdk'] == 36
