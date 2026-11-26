@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/workflows/android-dev-16.yml"
       - "scripts/prepare_dev_apk_16.py"
-      - "inputs/itell-1.6-b49-original.apk"
+      - "inputs/itell-1.6-49.apk"
   workflow_dispatch:
 
 permissions:
@@ -27,14 +27,14 @@ jobs:
         name: Check whether original recovery APK was uploaded
         shell: bash
         run: |
-          if [ -s inputs/itell-1.6-b49-original.apk ]; then
+          if [ -s inputs/itell-1.6-49.apk ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
             echo "Original APK present. Package job will validate SHA-256."
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Awaiting inputs/itell-1.6-b49-original.apk; packaging deliberately skipped."
+            echo "::notice::Awaiting inputs/itell-1.6-49.apk; packaging deliberately skipped."
             echo "## Recovery input required" >> "$GITHUB_STEP_SUMMARY"
-            echo "No APK has been built: upload the original 4,716,760-byte APK at inputs/itell-1.6-b49-original.apk." >> "$GITHUB_STEP_SUMMARY"
+            echo "No APK has been built: upload the original 4,716,760-byte APK at inputs/itell-1.6-49.apk." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   package:
@@ -57,7 +57,7 @@ jobs:
       - name: Recover candidate from original (exact SHA required)
         run: |
           python3 scripts/prepare_dev_apk_16.py \
-            --source inputs/itell-1.6-b49-original.apk \
+            --source inputs/itell-1.6-49.apk \
             --output dist/unsigned.apk \
             --report dist/recovery-report.json
       - name: zipalign before signing
