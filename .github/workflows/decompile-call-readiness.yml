@@ -1,6 +1,10 @@
 name: iTell - decompile call readiness path
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/decompile-call-readiness.yml"
   workflow_dispatch:
 
 permissions:
