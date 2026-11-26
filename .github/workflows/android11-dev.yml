@@ -1,0 +1,159 @@
+name: iTell Android 1.6 Build49 Android11 - DEV recovery and install test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/android11-dev.yml"
+      - "scripts/prepare_android11_compat.py"
+      - "scripts/emulator_smoke.sh"
+      - "scripts/prepare_dev_apk_16.py"
+      - "scripts/emulator_smoke.sh"
+      - "inputs/itell-1.6-49.apk"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: itell-android-dev-api30-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-input:
+    runs-on: ubuntu-24.04
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        name: Check whether original recovery APK was uploaded
+        shell: bash
+        run: |
+          if [ -s inputs/itell-1.6-49.apk ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Original APK present. Package job will validate SHA-256."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Awaiting inputs/itell-1.6-49.apk; packaging deliberately skipped."
+            echo "## Recovery input required" >> "$GITHUB_STEP_SUMMARY"
+            echo "No APK has been built: upload the original 4,716,760-byte APK at inputs/itell-1.6-49.apk." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  package:
+    needs: source-input
+    if: needs.source-input.outputs.available == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v4
+      - name: Install Android build tools
+        run: sdkmanager "build-tools;36.0.0" "platform-tools"
+      - name: Recover candidate from original (exact SHA required)
+        run: |
+          python3 scripts/prepare_dev_apk_16.py \
+            --source inputs/itell-1.6-49.apk \
+            --output dist/unsigned31.apk \
+            --report dist/recovery-report.json
+      - name: Apply exact Android 11 API 30 binary manifest overlay
+        run: |
+          python3 scripts/prepare_android11_compat.py \
+            --input dist/unsigned31.apk \
+            --output dist/unsigned.apk \
+            --report dist/android11-manifest-report.json
+      - name: Verify minimum Android version from binary manifest using AAPT
+        run: |
+          set -euo pipefail
+          BT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools/36.0.0"
+          "$BT/aapt" dump badging dist/unsigned.apk | tee dist/aapt-before-signing.txt
+          grep -Fq "sdkVersion:'30'" dist/aapt-before-signing.txt
+          grep -Fq "targetSdkVersion:'36'" dist/aapt-before-signing.txt
+      - name: zipalign before signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools/36.0.0"
+          "$BT/zipalign" -P 16 -f -v 4 dist/unsigned.apk dist/aligned.apk
+          "$BT/zipalign" -c -P 16 -v 4 dist/aligned.apk
+      - name: Generate one-run test signer (no signing secrets committed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/itell-dev"
+          keytool -genkeypair -noprompt -storetype PKCS12 \
+            -keystore "$RUNNER_TEMP/itell-dev/signer.p12" \
+            -storepass "throwaway-dev-only" -keypass "throwaway-dev-only" \
+            -alias itell-dev -keyalg RSA -keysize 3072 -validity 3650 \
+            -dname "CN=iTell DEV Test,O=iTell,C=US"
+          echo "::notice::This build uses an ephemeral signer; uninstall older iTell APK before testing."
+      - name: Sign and validate APK with official Android tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools/36.0.0"
+          export SIGNPASS="throwaway-dev-only"
+          "$BT/apksigner" sign \
+            --ks "$RUNNER_TEMP/itell-dev/signer.p12" --ks-type PKCS12 \
+            --ks-key-alias itell-dev --ks-pass env:SIGNPASS --key-pass env:SIGNPASS \
+            --v1-signing-enabled false --v2-signing-enabled true \
+            --v3-signing-enabled true --v4-signing-enabled false \
+            --out dist/itell-android-16-b49-api30-dev-untested.apk dist/aligned.apk
+          "$BT/apksigner" verify --verbose --print-certs \
+            --min-sdk-version 30 dist/itell-android-16-b49-api30-dev-untested.apk \
+            | tee dist/signature.txt
+          "$BT/zipalign" -c -P 16 -v 4 dist/itell-android-16-b49-api30-dev-untested.apk
+          python3 scripts/verify_apk.py dist/itell-android-16-b49-api30-dev-untested.apk \
+            | tee dist/static-checks.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: itell-16-b49-api30-dev-package-${{ github.run_number }}
+          path: |
+            dist/itell-android-16-b49-api30-dev-untested.apk
+            dist/recovery-report.json
+            dist/android11-manifest-report.json
+            dist/aapt-before-signing.txt
+            dist/signature.txt
+            dist/static-checks.json
+          retention-days: 14
+          if-no-files-found: warn
+
+  emulator-install:
+    needs: package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: itell-16-b49-api30-dev-package-${{ github.run_number }}
+          path: dist
+      - name: Configure KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+      - name: Android API 30 install and foreground launch smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/emulator_smoke.sh dist/itell-android-16-b49-api30-dev-untested.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: itell-16-b49-api30-dev-install-diagnostics-${{ github.run_number }}
+          path: smoke-logs/
+          retention-days: 14
+          if-no-files-found: warn
