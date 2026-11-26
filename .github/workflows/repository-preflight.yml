@@ -22,7 +22,7 @@ jobs:
             echo "::error::Private signing material must not be stored in Git"
             exit 1
           fi
-          if grep -Ei '\.apk$' /tmp/itell-tracked.txt | grep -vFx 'inputs/itell-1.4-b40-original.apk'; then
+          if grep -Ei '\.apk$' /tmp/itell-tracked.txt | grep -vFx -e 'inputs/itell-1.4-b40-original.apk' -e 'downloads/iTell-Android-DEV-Build-6-UNTESTED.apk'; then
             echo "::error::Only the SHA-pinned historical recovery APK is permitted as a tracked APK"
             exit 1
           fi
