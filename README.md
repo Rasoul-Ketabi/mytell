@@ -10,7 +10,14 @@ The target is compatibility with **iTell iOS 1.6**, temporarily bypassing the on
 
 ## Android OS compatibility
 
-**IMPORTANT:** The source and signed DEV Android 1.6 Build 49 APK both declare `minSdkVersion=31`, meaning **Android 12 or later is required**. The target SDK is 36. **Android 11 (API 30) cannot install the current Build 49 APK**, even if Google Play Protect is disabled. Prior successful GitHub CI installation on Android 15 (API 35) does not establish Android 11 support. A separately built and thoroughly tested Android 11 compatibility variant would be necessary; merely changing the manifest number is not sufficient proof that Android 12-only APIs are absent.
+The **original** Android 1.6 Build 49 and the regular patched DEV APK declare `minSdkVersion=31`, meaning **Android 12 or later** is required. `targetSdkVersion=36`.
+
+A separate **experimental Android 11 (API 30) candidate** is built by [the Android11 workflow](.github/workflows/android11-dev.yml). It starts with the exact source SHA-256, applies the preconditioned commercial-gate and old-domain-literal patches, changes **only** the binary manifest typed `minSdkVersion` from 31 to 30 (one byte), aligns and signs with official Android SDK tools using `--min-sdk-version 30`, and verifies the manifest using `aapt`. The output is a signed APK with `minSdkVersion=30`, `targetSdkVersion=36` and unchanged original QR/BLE/crypto bytecode (other than existing Build49 DEV patches).
+
+The current **API 30 emulator verification workflow** is available at [Android11 Actions](https://github.com/Rasoul-Ketabi/mytell/actions/workflows/android11-dev.yml). **Do not assume full functionality based on lowering minSdkVersion**. Until the API 30 install/launch test and real Android 11 phone + iOS 1.6 checks complete, this is a development candidate, NOT a fully certified Android11 release. For a test build, use the workflow artifact from the Android11 workflow after the package job passes.
+
+API30 and API35 variants are built independently; do not overwrite or rename the original Build49 APK. The old domains remain untrusted and must be blocked by DNS/firewall during testing.
+
 
 ## Historical Build 40 notes
 
