@@ -82,13 +82,9 @@ jobs:
         with:
           name: itell-call-readiness-static-analysis
           path: |
-            analysis/original/sources/com/itellapp/android/BridgeService.java
-            analysis/original/sources/com/itellapp/android/call/CompanionCalls.java
-            analysis/original/sources/com/itellapp/android/shell/
-            analysis/original/sources/com/itellapp/android/MainActivity.java
-            analysis/build6/sources/com/itellapp/android/BridgeService.java
-            analysis/build6/sources/com/itellapp/android/call/CompanionCalls.java
-            analysis/build6/sources/com/itellapp/android/shell/
-            analysis/build6/sources/com/itellapp/android/MainActivity.java
+            analysis/original/sources/
+            analysis/original/resources/
+            analysis/build6/sources/
+            analysis/build6/resources/
             analysis/evidence/
           retention-days: 7
