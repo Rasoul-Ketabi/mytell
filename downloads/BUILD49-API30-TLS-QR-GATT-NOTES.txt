@@ -1,0 +1,9 @@
+iTell Android 1.6 Build49 - Android11 TLS experimental DEV build.
+Verified: exact SHA-pinned source, patched ADB TLS exporter, APK static checks,
+Android SDK signature validation and 4-byte resources alignment.
+The emulator test runs separately; do NOT infer a pass from published APK.
+QR recovery: reopen BLE GATT server only when missing during initial QR refresh.
+Physical phone pairing, BLE and iOS 1.6 telephony/audio remain unverified.
+Old-domain strings replaced, but runtime network isolation not proven.
+Signed with ephemeral development key. Uninstall previous DEV build before installing.
+For test phones only, not a production release.
