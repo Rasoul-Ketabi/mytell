@@ -40,7 +40,7 @@ def repair_ble_gatt_when_qr_refresh(smali_root):
     import re
     path = smali_root / "com/itellapp/android/BridgeService.smali"
     data = path.read_text(encoding="utf-8")
-    pattern = r"(?ms)^\\.method public final a0\\(\\)V\\n.*?^\\.end method"
+    pattern = r"(?ms)^\\.method[^\\n]*\\sa0\\(\\)V\\s*\\n.*?^\\.end method"
     matches = list(re.finditer(pattern, data))
     if len(matches) != 1:
         raise RuntimeError(f"Expected exactly one BridgeService.a0()V, got {len(matches)}")
