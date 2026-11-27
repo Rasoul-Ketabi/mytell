@@ -43,7 +43,7 @@ def repair_ble_gatt_when_qr_refresh(smali_root):
     pattern = r"(?ms)^\\.method[^\\n]*\\sa0\\(\\)V\\s*\\n.*?^\\.end method"
     matches = list(re.finditer(pattern, data))
     if len(matches) != 1:
-        raise RuntimeError(f"Expected exactly one BridgeService.a0()V, got {len(matches)}")
+        raise RuntimeError(f"Expected exactly one BridgeService.a0()V, got {len(matches)}; signatures: {[x for x in re.findall(r\'(?m)^\\.method[^\\n]*\', data) if \'a0\' in x or \'q0\' in x or \'r0\' in x]}")
     method = matches[0].group()
     count = re.search(r"(?m)^[ \\t]+\\.(locals|registers)[ \\t]+(\\d+)[ \\t]*$", method)
     if not count:
