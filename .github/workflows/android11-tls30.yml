@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/android11-tls30.yml'
-      - 'scripts/android11/**'
+      - 'scripts/android11/tls30_repack.py'
+      - 'scripts/android11/build_android11_tls.sh'
+      - 'scripts/android11/AdbTlsCompat.java'
       - 'scripts/prepare_android11_compat.py'
       - 'scripts/prepare_dev_apk_16.py'
       - 'inputs/itell-1.6-49.apk'
