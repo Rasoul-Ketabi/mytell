@@ -161,5 +161,7 @@ jobs:
           git add downloads/BUILD49-API30-TLS-QR-GATT-NOTES.txt
           if ! git diff --cached --quiet; then
             git commit -m 'build: publish Android11 TLS+QR GATT recovery development APK'
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           fi
