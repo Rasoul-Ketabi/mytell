@@ -31,43 +31,44 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 def repair_ble_gatt_when_qr_refresh(smali_root):
-    """Repair only a missing GATT server when the existing QR refresh callback runs.
+    """At QR refresh, restore BLE GATT server only if previously unavailable.
 
-    On healthy/previously paired devices, behaviour is bytecode-equivalent to the
-    original branch: if server != null, skip straight to original code. No QR,
-    ECDH, BLE MAC, authorization or iOS protocol changes.
+    No change to QR contents, BLE authentication, iPhone pairing or ECDH.
     """
     import re
     path = smali_root / "com/itellapp/android/BridgeService.smali"
     data = path.read_text(encoding="utf-8")
-    pattern = r"(?ms)^\\.method[^\\n]*\\sa0\\(\\)V\\s*\\n.*?^\\.end method"
+    pattern = r"(?ms)^\.method[^\n]*\sa0\(\)V\s*\n.*?^\.end method"
     matches = list(re.finditer(pattern, data))
     if len(matches) != 1:
-        raise RuntimeError(f"Expected exactly one BridgeService.a0()V, got {len(matches)}; signatures: {[x for x in re.findall(r\'(?m)^\\.method[^\\n]*\', data) if \'a0\' in x or \'q0\' in x or \'r0\' in x]}")
+        signatures = [x for x in re.findall(r"(?m)^\.method[^\n]*", data)
+                      if "a0" in x or "q0" in x or "r0" in x]
+        raise RuntimeError(f"Expected exactly one BridgeService.a0()V, got {len(matches)}; signatures: {signatures}")
     method = matches[0].group()
-    count = re.search(r"(?m)^[ \\t]+\\.(locals|registers)[ \\t]+(\\d+)[ \\t]*$", method)
+    count = re.search(r"(?m)^[ \t]+\.(locals|registers)[ \t]+(\d+)[ \t]*$", method)
     if not count:
         raise RuntimeError("No register declaration in BridgeService.a0()V")
     old_count = int(count.group(2))
     n = old_count if count.group(1) == "locals" else old_count - 1
     if n < 0 or n >= 16:
         raise RuntimeError(f"Unsafe GATT compatibility register index: {n}")
-    label = re.search(r"(?m)^[ \\t]*:try_start[^\\n]*$", method)
+    label = re.search(r"(?m)^[ \t]*:try_start[^\n]*$", method)
     if not label:
         raise RuntimeError("No protected try block in BridgeService.a0()V")
     patch = (
-        f"\\n    iget-object v{n}, p0, Lcom/itellapp/android/BridgeService;->b:Landroid/bluetooth/BluetoothGattServer;\\n"
-        f"    if-nez v{n}, :itell_gatt_existing\\n"
-        "    invoke-virtual {p0}, Lcom/itellapp/android/BridgeService;->r0()V\\n"
-        "    :itell_gatt_existing\\n"
+        f"\n    iget-object v{n}, p0, Lcom/itellapp/android/BridgeService;->b:Landroid/bluetooth/BluetoothGattServer;\n"
+        f"    if-nez v{n}, :itell_gatt_existing\n"
+        "    invoke-virtual {p0}, Lcom/itellapp/android/BridgeService;->r0()V\n"
+        "    :itell_gatt_existing\n"
     )
     if "itell_gatt_existing" in method:
         raise RuntimeError("GATT repair already injected")
     method = method[:count.start(2)] + str(old_count + 1) + method[count.end(2):]
-    label = re.search(r"(?m)^[ \\t]*:try_start[^\\n]*$", method)
+    label = re.search(r"(?m)^[ \t]*:try_start[^\n]*$", method)
     method = method[:label.end()] + patch + method[label.end():]
     path.write_text(data[:matches[0].start()] + method + data[matches[0].end():], encoding="utf-8")
     return "BridgeService.a0()V: reopen GATT only if null when QR refresh arrives"
+
 
 def execute(args):
     args.output.parent.mkdir(parents=True, exist_ok=True)
